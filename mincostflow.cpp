@@ -46,7 +46,7 @@ kashkevich main()
         cin >> a >> b >> c >> f;
         a--, b--;
         rib fst = {b, c, f, 0, int(G[b].size())},
-            snd = {a, c, f, 0, int(G[a].size())};
+            snd = {a, 0, -f, 0, int(G[a].size())};
         G[a].pb(fst);
         G[b].pb(snd);
     }
