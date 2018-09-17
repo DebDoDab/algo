@@ -48,16 +48,16 @@ kashkevich main()
 
     O.pb(0);
     D[0] = 0;
-    Used[0] = 1;
     while (!O.empty()) {
         int x = O.front();
+        Used[x] = 2;
         O.pop_front();
         for (pii y : G[x]) {
             if (D[y.ft] > D[x] + y.sd) {
                 D[y.ft] = D[x] + y.sd;
                 if (!Used[y.ft]) {
                     O.pb(y.ft);
-                } else {
+                } else if (Used[y.ft] == 2) {
                     O.push_front(y.ft);
                 }
                 P[y.ft] = x;
