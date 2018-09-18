@@ -89,7 +89,7 @@ kashkevich main()
         for (int x = t; x != s; x = Parent[x]) {
             addflow = min(addflow, G[Parent[x]][ParentRib[x]].maxNumber - G[Parent[x]][ParentRib[x]].flow);
         }
-
+        
         //add flow
         for (int x = t; x != s; x = Parent[x]) {
             G[Parent[x]][ParentRib[x]].flow += addflow;
