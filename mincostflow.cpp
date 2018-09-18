@@ -46,7 +46,7 @@ kashkevich main()
         cin >> a >> b >> c >> f;
         a--, b--;
         rib fst = {b, c, f, 0, int(G[b].size())},
-            snd = {a, c, f, 0, int(G[a].size())};
+            snd = {a, 0, -f, 0, int(G[a].size())};
         G[a].pb(fst);
         G[b].pb(snd);
     }
@@ -89,6 +89,7 @@ kashkevich main()
         for (int x = t; x != s; x = Parent[x]) {
             addflow = min(addflow, G[Parent[x]][ParentRib[x]].maxNumber - G[Parent[x]][ParentRib[x]].flow);
         }
+
         //add flow
         for (int x = t; x != s; x = Parent[x]) {
             G[Parent[x]][ParentRib[x]].flow += addflow;
