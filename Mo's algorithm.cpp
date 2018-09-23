@@ -58,7 +58,7 @@ struct query {
 kashkevich main()
 {
 #ifndef KlishkevichVadimka
-    //faster
+    faster
 #else
     openfiles
 #endif
@@ -79,7 +79,7 @@ kashkevich main()
     for (int i = 0; i < q; i++) {
         if (i && QUERY[i].block != QUERY[i-1].block) {
             l = r = QUERY[i].l;
-            ans = 0;
+            ans = 0ll;
             F.assign(1000000, 0);
         }
         while (r < QUERY[i].r) {
@@ -96,12 +96,10 @@ kashkevich main()
     }
 
     sort(Ans.begin(), Ans.end());
-    for (pii x : Ans) cout << x.sd << endl;
+    for (auto x : Ans) cout << x.sd << endl;
 
 
 }
-
-
 
 
 
