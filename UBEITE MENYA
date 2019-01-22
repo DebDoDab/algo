@@ -1,0 +1,256 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX_LEN = 1000;
+const int BASE = 1000000000;
+
+class lint {
+public:
+    lint();/**/
+
+    lint(long long number);/**/
+    lint(int number);/**/
+    lint(const lint& number);/**/
+
+    int get_size() const;/**/
+    bool is_negative_number() const;/**/
+
+    lint& operator+=(lint& b);/**/
+    lint& operator-=(lint& b);/**/
+    lint& operator*=(const lint& b);/**/
+    lint& operator*=(const int& b);/**/
+    lint& operator/=(const int& b);/**/
+    vector<int> numbers;
+
+private:
+    bool is_negative;
+    int size = 0;
+
+    void integer_to_vector(long long a);/**/
+    lint& abs() {
+        this->is_negative = false;
+    }
+};
+
+void print(const lint& x);
+
+bool operator<(const lint& a, const lint& b);/**/
+
+
+lint operator+(const lint& lhs, const lint& rhs);
+
+lint operator-(const lint& lhs, const lint& rhs);
+
+lint operator*(const lint& lhs, const lint& rhs);
+
+lint operator/(const lint& lhs, const lint& rhs);
+
+bool operator<(const lint& a, const lint& b) {
+    if (a.get_size() != b.get_size()) {
+        return a.get_size() < b.get_size();
+    }
+    for (int i = a.get_size()-1; i >= 0; i--) {
+        if (a.numbers[i] != b.numbers[i]) {
+            return a.numbers[i] < b.numbers[i];
+        }
+    }
+    return false;
+}
+
+void lint::integer_to_vector(long long a) {
+    if (a < 0) {
+        is_negative = true;
+        a = (-1) * a;
+    } else {
+        is_negative = false;
+    }
+
+    if (a == 0) {
+        numbers[0] = 0;
+        size = 1;
+    }
+
+    vector<int> temp;
+
+//    cerr << "OPAOPAOPAOPAPA : ";
+    while (a) {
+//        cerr << a << " ";
+        int x = a % BASE;
+        a /= BASE;
+        temp.push_back(x);
+    }
+
+//    cerr << temp.size() << endl;
+
+    for (int i = temp.size() - 1; i >= 0; i--) {
+        numbers[i] = temp[i];
+    }
+    size = temp.size();
+//    print(*this);
+}
+
+lint::lint() {
+    numbers.resize(MAX_LEN);
+    integer_to_vector(0);
+}
+
+lint::lint(int number) {
+    numbers.resize(MAX_LEN);
+    integer_to_vector(static_cast<long long>(number));
+}
+
+lint::lint(long long number) {
+    numbers.resize(MAX_LEN);
+    integer_to_vector(number);
+}
+
+lint::lint(const lint& number) {
+    is_negative = number.is_negative_number();
+    numbers = number.numbers;
+    size = number.get_size();
+}
+
+int lint::get_size() const {
+    return size;
+}
+
+bool lint::is_negative_number() const {
+    return is_negative;
+}
+
+lint& lint::operator+=(lint& b) {
+    if (!is_negative_number() && b.is_negative_number()) {
+        lint temp(b);
+        temp = temp.abs();
+
+        return (*this).operator-=(temp);
+    }
+
+    if (is_negative_number() && !b.is_negative_number()) {
+        lint temp_this = lint(*this);
+        temp_this.is_negative = false;
+
+        lint temp = lint(b);
+        temp -= temp_this;
+        *this = temp;
+
+        return *this;
+    }
+
+    int carry = 0;
+    int i;
+    for (i = 0; i < max(size, b.get_size()) || carry; i++) {
+        numbers[i] += b.numbers[i] + carry;
+        carry = 0;
+        if (numbers[i] > BASE) {
+            numbers[i] -= BASE;
+            carry = 1;
+        }
+    }
+    size = max(size, i);
+    return *this;
+
+}
+
+lint& lint::operator-=(lint& b) {
+    if (!is_negative_number() && b.is_negative_number()) {
+        lint temp(b);
+        return (*this).operator+=(temp.abs());
+    }
+
+    if (is_negative_number() && !b.is_negative_number()) {
+        lint temp(b);
+        temp.is_negative = true;
+        return (*this).operator+=(temp);
+    }
+
+    if (*this < b) {
+        swap(*this, b);
+    }
+
+    int carry = 0;
+    int i;
+    for (i = 0; i < max(size, b.get_size()) || carry; i++) {
+        numbers[i] -= b.numbers[i] + carry;
+        carry = 0;
+        if (numbers[i] < 0) {
+            numbers[i] += BASE;
+            carry = 1;
+        }
+    }
+    while (size > 0 && !numbers[size-1]) size--;
+    return *this;
+}
+
+lint& lint::operator*=(const lint& b) {
+    lint c;
+    int i;
+    for (i = 0; i < size; i++) {
+        for (int j = 0, carry = 0; j < b.get_size() || carry; j++) {
+            long long cur = c.numbers[i+j] + numbers[i] * 1ll * b.numbers[j] + carry;
+            c.numbers[i+j] = cur % BASE;
+//            cerr << c.numbers[i+j] << "@" << endl;
+            carry = cur / BASE;
+        }
+    }
+//    print(c);
+    int sze = size + b.get_size();
+    *this = c;
+    size = sze;
+//    print(*this);
+    while (size > 0 && !numbers[size-1]) size--;
+    return *this;
+}
+
+lint& lint::operator*=(const int& b) {
+    int i, carry = 0;
+    for (i = 0; i < size || carry; i++) {
+        long long cur = numbers[i] * 1ll * b + carry;
+        numbers[i] = cur % BASE;
+        carry = cur / BASE;
+    }
+    size = i;
+    return *this;
+}
+
+lint& lint::operator/=(const int& b) {
+    int carry = 0;
+    for (int i = size - -1; i >= 0; i--) {
+        long long cur = numbers[i] + carry * 1ll * BASE;
+        numbers[i] = cur / b;
+        carry = cur % b;
+        if (i == size - 1 && !numbers[i]) size--;
+    }
+    return *this;
+}
+
+void print(const lint& x) {
+//    cout << "YA: " << x.get_size() << " : " << x.numbers.size() << endl;
+    for (int i = x.get_size() - 1; i >= 0; i--) {
+        if (i != x.get_size() - 1) {
+            for (int j = BASE/10; j > 1; j /= 10) {
+                if (x.numbers[i] < j) cout << 0;
+            }
+        }
+        cout << x.numbers[i];
+    }
+    cout << endl;
+}
+
+
+
+
+
+int main()
+{
+    int n, m, a;
+    cin >> n >> m >> a;
+    lint x(n + a - 1), y(m + a - 1);
+//    print(x);
+    x /= a;
+    y /= a;
+//    print(x);
+//    print(y);
+    x *= y;
+    print(x);
+}
