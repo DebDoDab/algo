@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-const int MAX_LEN = 1000;
+const int MAX_LEN = 10000;
 const int BASE = 1000000000;
 
 class lint {
@@ -20,11 +20,12 @@ public:
     lint& operator*=(const lint& b);/**/
     lint& operator*=(const int& b);/**/
     lint& operator/=(const int& b);/**/
+    lint& operator%=(const int& b);/**/
     vector<int> numbers;
+    int size = 0;
 
 private:
     bool is_negative;
-    int size = 0;
 
     void integer_to_vector(long long a);/**/
     lint& abs() {
@@ -67,7 +68,8 @@ void lint::integer_to_vector(long long a) {
 
     if (a == 0) {
         numbers[0] = 0;
-        size = 1;
+        size = 0;
+        return;
     }
 
     vector<int> temp;
@@ -142,9 +144,9 @@ lint& lint::operator+=(lint& b) {
     for (i = 0; i < max(size, b.get_size()) || carry; i++) {
         numbers[i] += b.numbers[i] + carry;
         carry = 0;
-        if (numbers[i] > BASE) {
+        while (numbers[i] >= BASE) {
             numbers[i] -= BASE;
-            carry = 1;
+            carry++;
         }
     }
     size = max(size, i);
@@ -166,6 +168,7 @@ lint& lint::operator-=(lint& b) {
 
     if (*this < b) {
         swap(*this, b);
+        is_negative = true;
     }
 
     int carry = 0;
@@ -215,7 +218,7 @@ lint& lint::operator*=(const int& b) {
 
 lint& lint::operator/=(const int& b) {
     int carry = 0;
-    for (int i = size - -1; i >= 0; i--) {
+    for (int i = size -1; i >= 0; i--) {
         long long cur = numbers[i] + carry * 1ll * BASE;
         numbers[i] = cur / b;
         carry = cur % b;
@@ -224,33 +227,109 @@ lint& lint::operator/=(const int& b) {
     return *this;
 }
 
-void print(const lint& x) {
+ostream & operator<<(ostream &out, const lint& x) {
 //    cout << "YA: " << x.get_size() << " : " << x.numbers.size() << endl;
+    if (x.get_size() == 0) {
+        out << 0;
+        return out;
+    }
+    if (x.is_negative_number()) {
+        out << "-";
+    }
     for (int i = x.get_size() - 1; i >= 0; i--) {
         if (i != x.get_size() - 1) {
             for (int j = BASE/10; j > 1; j /= 10) {
-                if (x.numbers[i] < j) cout << 0;
+                if (x.numbers[i] < j) out << 0;
             }
         }
-        cout << x.numbers[i];
+        out << x.numbers[i];
     }
-    cout << endl;
+    out << endl;
+    return out;
+}
+lint& lint::operator%=(const int& b) {
+    int carry = 0;
+    for (int i = size -1; i >= 0; i--) {
+        long long cur = numbers[i] + carry * 1ll * BASE;
+        numbers[i] = cur / b;
+        carry = cur % b;
+        if (i == size - 1 && !numbers[i]) size--;
+    }
+//    cerr << b << " " << carry << endl;
+    lint temp(carry);
+//    cout << temp << endl;
+    *this = temp;
+    return *this;
 }
 
+
+istream & operator>>(istream &in, lint &x) {
+    string s;
+    in >> s;
+
+    x = lint(0);
+
+    /**if (!s.empty() && (s[0] == '-')) {
+        x.is_negative = 1;
+        s.erase(0, 1);
+    } else {
+        x.is_negative = 0;
+    }*/
+
+
+
+
+    int pos = 0;
+
+    while ((pos < s.size()) && (s[pos] == '0'))
+        pos++;
+
+    s.erase(0, pos);
+
+
+    int cur = 0, start = s.size() - 1;
+    long long ten = 1;
+
+    for (int i = s.size() - 1; i >= 0; i--, ten *= 10) {
+        if (ten == BASE) {
+            x.numbers[x.get_size()] = cur;
+            x.size++;
+            ten = 1;
+            cur = 0;
+            start = i;
+        }
+
+        cur += ten * (s[i] - '0');
+    }
+
+
+    x.numbers[x.get_size()] = cur;
+    x.size++;
+//    cerr << "!" << x.numbers[0] << " " << x.size << endl;
+
+
+
+    return in;
+}
+
+lint fact(int x) {
+    lint y(1);
+    for (int f = 2; f <= x; f++) {
+        lint temp(f);
+        y *= temp;
+    }
+    return y;
+}
 
 
 
 
 int main()
 {
-    int n, m, a;
-    cin >> n >> m >> a;
-    lint x(n + a - 1), y(m + a - 1);
-//    print(x);
-    x /= a;
-    y /= a;
-//    print(x);
-//    print(y);
-    x *= y;
-    print(x);
+    lint a;
+    int b;
+
+    cin >> a >> b;
+    a %= b;
+    cout << a;
 }
