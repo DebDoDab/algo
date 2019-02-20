@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+#include <chrono>
+
+using namespace std;
+using namespace __gnu_pbds;
+template <typename T>
+using ordered_set = tree<T, null_type, less_equal<T>, rb_tree_tag, tree_order_statistics_node_update>;
+
+using ll = long long;
+using ull =  unsigned long long;
+using ld = long double;
+using pii = pair <int, int>;
+using pll = pair <ll, ll>;
+using t3 = tuple<int, int, int>;
+
+#define endl "\n"
+#define ft first
+#define sd second
+#define openfiles ifstream cin ("input.txt"); ofstream cout ("output.txt");
+#define pb push_back
+#define eb emplace_back
+#define in insert
+#define faster ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+const int INF = 1000000010;
+const ll INFLL = 1000000000000000010;
+const ld EPS = 0.00001;
+const ll MOD = 998244353;
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+
+#define mt make_tuple
+#define g0(x) get<0>(x)
+#define g1(x) get<1>(x)
+#define g2(x) get<2>(x)
+#define g3(x) get<3>(x)
+
+int n;
+vector<t3> A;
+vector<vector<ll>> dp;
+
+//#define KlishkevichVadimka
+signed main()
+{
+#ifdef KlishkevichVadimka
+    openfiles
+#endif
+    faster;
+    clock_t zzz = clock();
+
+    cin >> n;
+    A.resize(n);
+    for (auto& x : A) {
+        cin >> g0(x) >> g1(x) >> g2(x);
+    }
+
+    dp.resize(n + 1, vector<ll>(n + 1));
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            dp[i + 1][j + 1] = max(0ll, g0(A[i]) - g1(A[i]) * 1ll * min(j, g2(A[i])));
+            dp[i + 1][j + 1] *= -1;
+        }
+    }
+
+    vector<ll> U(n + 1), V(n + 1), P(n + 1), Way(n + 1);
+
+    for (int i = 1; i <= n; i++) {
+        vector<ll> MinV(n + 1, INFLL), Used(n + 1, 0);
+        int j0 = 0;
+        P[0] = i;
+        do {
+            Used[j0] = 1;
+            int i0 = P[j0], j1;
+            ll delta = INFLL;
+            for (int j = 1; j <= n; j++) {
+                if (!Used[j]) {
+                    ll cur = dp[i0][j] - U[i0] - V[j];
+                    if (MinV[j] > cur) {
+                        MinV[j] = cur, Way[j] = j0;
+                    }
+                    if (delta > MinV[j]) {
+                        delta = MinV[j], j1 = j;
+                    }
+                }
+            }
+            for (int j = 0; j <= n; j++) {
+                if (Used[j]) {
+                    U[P[j]] += delta, V[j] -= delta;
+                } else {
+                    MinV[j] -= delta;
+                }
+            }
+            j0 = j1;
+        } while (P[j0]);
+        do {
+            int j1 = Way[j0];
+            P[j0] = P[j1];
+            j0 = j1;
+        } while (j0);
+    }
+
+    cout << V[0] << endl;
+
+
+
+
+    cerr << endl << "Time : " << ld(clock() - zzz) / CLOCKS_PER_SEC;
+}
