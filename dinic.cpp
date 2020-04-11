@@ -1,144 +1,145 @@
-﻿#include <bits/stdc++.h>
+//#pragma GCC optimize("O3")
+//#pragma GCC target("sse,sse2,sse3,ssse3,sse4,avx,avx2")
+#pragma GCC optimize("unroll-loops")
+
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
 #include <chrono>
 
 using namespace std;
+using namespace __gnu_pbds;
+template <typename T>
+using ordered_set = tree<T, null_type, less_equal<T>, rb_tree_tag, tree_order_statistics_node_update>;
 
-typedef tuple<int, int, int, int> t3;
-typedef pair <int, int> pii;
-typedef pair <long long, long long> pll;
-typedef long long ll;
-typedef unsigned long long ull;
-typedef long double ld;
+using ll = long long;
+using ull =  unsigned long long;
+using ld = long double;
+using pii = pair <int, int>;
+using pll = pair <ll, ll>;
+using t3 = tuple<int, int, int, int>;
 
 #define endl "\n"
 #define ft first
 #define sd second
-#define openfiles ifstream cin ("input.txt"); ofstream cout ("output.txt");
-#define INF 2147483647
-#define INFLL 10000000000000000
+#define openfiles ifstream cin ("maxflow.in"); ofstream cout ("maxflow.out");
 #define pb push_back
+#define eb emplace_back
 #define in insert
 #define faster ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
-#define EPS ld(0.00000000001)
-#define MOD 1000000007
+const int INF = 1000000010;
+const ll INFLL = 1000000000010000010;
+const ld EPS = 0.0000001;
+const ll MOD = 1000000123;
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 
-    int n, m;
-    vector<t3> Edges;
-    vector<vector<int>> G;
-    vector<int> Used;
-    vector<int> Ed;
+#define mt make_tuple
+#define g0(x) get<0>(x)
+#define g1(x) get<1>(x)
+#define g2(x) get<2>(x)
+#define g3(x) get<3>(x)
 
-//#define KlishkevichVadimka
+struct edge {
+    int a, b, c, f;
+
+    edge(int a_, int b_, int c_, int f_) {
+        a = a_;
+        b = b_;
+        c = c_;
+        f = f_;
+    }
+};
+
+int n, m;
+vector<edge> Edges;
+vector<vector<int>> G;
+vector<int> Used;
+vector<int> Cur;
+int s, t;
+
+#define KlishkevichVadimka
 signed main()
 {
-#ifndef KlishkevichVadimka
-    faster
-#else
+#ifdef KlishkevichVadimka
     openfiles
-    faster
 #endif
-    ;
+    faster;
+    clock_t zzz = clock();
 
-    cin >> n >> m;
-    G.resize(n+2+m);
-
-    auto add = [&] (int v, int u, int c) {
-        G[v].pb(Edges.size());
-        Edges.pb(make_tuple(v, u, c, 0));
-        G[u].pb(Edges.size());
-        Edges.pb(make_tuple(u, v, 0, 0));
+    auto addEdge = [&](int x, int y, int c) {
+        G[x].push_back(Edges.size());
+        Edges.emplace_back(x, y, c, 0);
+        G[y].push_back(Edges.size());
+        Edges.emplace_back(y, x, 0, 0);
     };
 
-    for (int i = 1; i <= n; i++) {
-        int x;
-        cin >> x;
-        add(0, i, x);
-    }
+    auto addFlow = [&](int e, int flow) {
+        Edges[e].f += flow;
+        Edges[e ^ 1].f -= flow;
+    };
 
-    ll sum = 0ll;
-
-    for (int i = n+1; i < n+1+m; i++) {
-        int a, b, c;
-        cin >> a >> b >> c;
-        add(a, i, INF);
-        add(b, i, INF);
-        add(i, n+1+m, c);
-        sum += c;
-    }
-
-    auto bfs = [&](int x) {
-        deque<int> O = {x};
-        Used[x] = 1;
-        while (!O.empty() && !Used[n+1+m]) {
-            x = O.front();
+    auto bfs = [&]() {
+        deque<int> O = {s};
+        Used[s] = 1;
+        while(!O.empty() && !Used[t]) {
+            int x = O.front();
             O.pop_front();
-            for (int y : G[x]) {
-                if (!Used[get<1>(Edges[y])] && get<2>(Edges[y]) > get<3>(Edges[y])) {
-                    Used[get<1>(Edges[y])] = Used[x] + 1;
-                    O.pb(get<1>(Edges[y]));
+            for (auto& e: G[x]) {
+                auto edge = Edges[e];
+                if (edge.c - edge.f <= 0) continue;
+
+                if (!Used[edge.b]) {
+                    O.push_back(edge.b);
+                    Used[edge.b] = Used[x] + 1;
                 }
             }
         }
-        return Used[n+1+m];
+
+        return Used[t];
     };
 
-    function<int(int, int)> dfs = [&] (int x, int flow) {
-        if (x == n+1+m || !flow) return flow;
-        for (; Ed[x] < G[x].size(); Ed[x]++) {
-            int y = G[x][Ed[x]];
-            if (Used[get<1>(Edges[y])] != Used[x] + 1) continue;
-            int f = dfs(get<1>(Edges[y]), min(flow, get<2>(Edges[y]) - get<3>(Edges[y])));
-            if (f) {
-                get<3>(Edges[y]) += f;
-                get<3>(Edges[y^1]) -= f;
-                return f;
+    function<int(int, int)> dfs = [&](int x, int f) {
+        if (x == t || !f) {
+            return f;
+        }
+        for (; Cur[x] < G[x].size(); Cur[x]++) {
+            auto edge = Edges[G[x][Cur[x]]];
+
+            if (Used[edge.b] == Used[x] + 1) {
+                int flow = dfs(edge.b, min(f, edge.c - edge.f));
+                if (flow) {
+                    addFlow(G[x][Cur[x]], flow);
+                    return flow;
+                }
             }
         }
         return 0;
     };
 
-
-    Used.assign(n+2+m, 0);
-    Ed.assign(n+2+m, 0);
-
-    while(bfs(0)) {
-        ll flow = 0;
-        while (flow = dfs(0, INF)) {
-            sum -= flow;
-        }
-        Used.assign(n+2+m, 0);
-        Ed.assign(n+2+m, 0);
+    cin >> n >> m;
+    s = 0, t = n - 1;
+    G.resize(n);
+    for (int i = 0; i < m; i++) {
+        int a, b, c;
+        cin >> a >> b >> c;
+        a--, b--;
+        addEdge(a, b, c);
     }
 
-    cout << sum << endl;
+    int ans = 0;
+    Used.assign(n, 0);
+    Cur.assign(n, 0);
+    while(bfs()) {
+        int curAns = 0;
+        while(curAns = dfs(0, INF)) {
+            ans += curAns;
+        }
+        Used.assign(n, 0);
+        Cur.assign(n, 0);
+    }
+
+    cout << ans << endl;
 
 
-
-
-
-
-
-
+    cerr << endl << "Time : " << ld(clock() - zzz) / CLOCKS_PER_SEC;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
